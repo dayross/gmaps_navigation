@@ -148,6 +148,32 @@ double getDistance({required LatLng origin, required LatLng destination,}){
     
   }
 
+  void addMarker(LatLng position){
+    // we work on temporary list for mutations
+    final temporaryList = state.markers;
+
+    if(temporaryList.isEmpty){
+      // if no items, first one is origin
+      temporaryList.add(Marker(
+        markerId: const MarkerId('origin'),
+        position: position));
+
+      state = state.copyWith(markers: temporaryList);
+      
+    } else {
+      // check if origin is present in list
+
+      bool isPresent = temporaryList.any((e)=> e.markerId.value == 'origin');
+
+      // if origin is present,  next one is destination
+
+      temporaryList.add(Marker(
+        markerId: MarkerId(isPresent ? 'destination' : 'origin'),
+        position: position));
+
+  }
+  }
+
   
 
 }
@@ -158,7 +184,7 @@ class TripState{
   final DirectionLegStep? currentInstruction;
   final LatLng? origin;
   final LatLng? destination;
-  final Marker? markers;
+  final List<Marker> markers;
 
   TripState({
     this.instructions = const [], 
@@ -166,7 +192,8 @@ class TripState{
     this.currentInstruction, 
     this.origin, 
     this.destination,
-    this.markers});
+    this.markers = const []
+    });
 
   TripState copyWith({
     List<DirectionLegStep>? instructions,
@@ -174,7 +201,7 @@ class TripState{
     DirectionLegStep? currentInstruction,
     LatLng? origin,
     LatLng? destination,
-    Marker? markers
+    List<Marker>? markers
   }) => TripState(
     instructions : instructions ?? this.instructions,
     polylines : polylines ?? this.polylines,

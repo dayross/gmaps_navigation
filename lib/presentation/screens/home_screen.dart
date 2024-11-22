@@ -77,9 +77,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   target: _center,
                   zoom: 14.0),
                   markers: {
-                    // Marker(markerId: MarkerId(
-                      
-                    // ))
+                    ...ref.watch(tripProvider).markers
+                  },
+                  onLongPress: (position){
+                    ref.watch(tripProvider.notifier).addMarker(position);
+
                   },
                 ),
               ),
@@ -105,6 +107,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       CustomTextField(
                         hintText: 'Origin', 
+                        // controller: TextEditingController(
+                        //   text: 
+                        // ),
                         onPressed: () {
                           ref.watch(tripProvider.notifier).getLocation();
                         },),
