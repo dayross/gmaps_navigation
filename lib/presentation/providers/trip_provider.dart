@@ -149,21 +149,71 @@ double getDistance({required LatLng origin, required LatLng destination,}){
   }
 
   void addMarker(LatLng position){
-    // we work on temporary list for mutations
-    final temporaryList = state.markers;
-
-    if(temporaryList.isEmpty){
-      // if no items, first one is origin
-      temporaryList.add(Marker(
+    
+    if(state.origin == null){
+      final newMarker = Marker(
         markerId: const MarkerId('origin'),
-        position: position));
+        position: position,
+        // onTap: deleteMarker('origin')
+        );
 
-      state = state.copyWith(markers: temporaryList);
+      state = state.copyWith(
+        origin: position,
+        // markers: [newMarker, ...state.markers]
+        );
       
+    } else {
+      // if origin is present,  next one is destination
+
+      final newMarker = Marker(
+        markerId: const MarkerId('destination'),
+        position: position,
+        // onTap: deleteMarker('destination')
+        );
+      state = state.copyWith(
+        destination: position,
+        // markers: [...state.markers, newMarker]
+        );
+
+    }
+  }
+
+  deleteMarker(String name){
+    // List temporaryList = state.markers;
+    // temporaryList.removeWhere((e) => e.markerId.value==name);
+    
+    if (name == 'origin'){
+      state = state.copyWith(
+        origin: null,
+        // markers: [...temporaryList]
+        );
+    } else if (name == 'destination'){
+      state = state.copyWith(destination: null,
+      // markers: [...temporaryList]
+      );
+    } 
+  }
+}
+
+
+/**
+ *   void addMarker(LatLng position){
+    // we work on temporary list for mutations
+    var temporaryList = state.markers;
+
+    if(state.markers.isEmpty){
+      // if no items, first one is origin
+
+      final newMarker = Marker(
+        markerId: const MarkerId('origin'),
+        position: position);
+
+      state = state.copyWith(markers: [newMarker]);
+
     } else {
       // check if origin is present in list
 
-      bool isPresent = temporaryList.any((e)=> e.markerId.value == 'origin');
+      bool isPresent = state.markers.any((e)=> e.markerId.value == 'origin');
 
       // if origin is present,  next one is destination
 
@@ -171,12 +221,14 @@ double getDistance({required LatLng origin, required LatLng destination,}){
         markerId: MarkerId(isPresent ? 'destination' : 'origin'),
         position: position));
 
-  }
-  }
+      state = state.copyWith(markers: temporaryList);
 
-  
-
+    }
+    
+    return;
+  }
 }
+ */
 
 class TripState{
   final List<DirectionLegStep> instructions;

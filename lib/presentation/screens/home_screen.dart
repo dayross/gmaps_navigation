@@ -1,5 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gmaps_cloneish/presentation/providers/map_controller_provider.dart';
@@ -58,6 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final tripProv = ref.watch(tripProvider);
     
 
 
@@ -77,7 +80,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   target: _center,
                   zoom: 14.0),
                   markers: {
-                    ...ref.watch(tripProvider).markers
+                    ref.watch(tripProvider).origin != null 
+                      ? Marker(markerId: MarkerId('origin'),
+                          position: tripProv.origin!,
+                          onTap: () => ref.watch(tripProvider.notifier).deleteMarker('origin'),
+                          consumeTapEvents: true
+                          )
+                      : Marker(markerId: MarkerId('origin')),
+
+                    ref.watch(tripProvider).destination != null 
+                      ? Marker(markerId: MarkerId('destination'),
+                          position: tripProv.destination!,
+                          onTap: () => ref.read(tripProvider.notifier).deleteMarker('destination'),
+                          consumeTapEvents: true
+                          )
+                      : Marker(markerId: MarkerId('destination')),
                   },
                   onLongPress: (position){
                     ref.watch(tripProvider.notifier).addMarker(position);
@@ -107,15 +124,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       CustomTextField(
                         hintText: 'Origin', 
-                        // controller: TextEditingController(
-                        //   text: 
-                        // ),
+                        controller: TextEditingController(
+                          text: tripProv.origin != null ? '${tripProv.origin!.latitude},${tripProv.origin!.longitude}' : ''
+                        ),
                         onPressed: () {
                           ref.watch(tripProvider.notifier).getLocation();
                         },),
                       SizedBox(height: 4,),
                       CustomTextField(
-                        hintText: 'Destination',),
+                        hintText: 'Destination',
+                        controller: TextEditingController(
+                          text: tripProv.destination != null ? '${tripProv.destination!.latitude},${tripProv.destination!.longitude}' : ''
+                        )),
                       
                     ],
                   ),
