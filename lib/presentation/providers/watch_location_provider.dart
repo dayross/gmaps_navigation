@@ -23,7 +23,7 @@ final watchLocationProvider = StreamProvider.autoDispose<(double, double)>((ref)
   // assumming now that we have the permission given
   await for (final location in Geolocator.getPositionStream()){
     // whatever we're going to do wit the given location
-    print({location.latitude,' , ', location.longitude});
+    // print({location.latitude,' , ', location.longitude});
     yield (location.latitude, location.longitude);
   }
 });

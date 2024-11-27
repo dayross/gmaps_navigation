@@ -24,14 +24,62 @@ class TripNotifier extends StateNotifier<TripState>{
 
   final MapNotifier mapNotifier;
 
-double getDistance({required LatLng origin, required LatLng destination,}){
-    return Geolocator.distanceBetween(
-      origin.latitude, 
-      origin.longitude,
-      destination.latitude, 
-      destination.longitude,
-      );
+  void setOrigin(LatLng? value) async{
+    // new list with the content of the current markers
+    List<Marker> temporaryList = state.markers;
+
+    // we make new marker based on if the value is null or not
+    Marker newMarker;
+    value == null
+    ? newMarker = Marker(markerId: MarkerId('origin'))
+    : newMarker = Marker(markerId: const MarkerId('origin'), position: value);
+
+
+    if (temporaryList.isNotEmpty) deleteMarkersByType('origin', temporaryList);
+
+    temporaryList.insert(0, newMarker);
+
+    state = state.copyWith(
+      markers: [...temporaryList],
+      origin: value ?? LatLng(0,0)
+    );
   }
+
+  void setDestination(LatLng? value) async{
+
+    // new list with the content of the current markers
+    List<Marker> temporaryList = state.markers;
+
+    // we make new marker based on if the value is null or not
+    Marker newMarker;
+    value == null
+    ? newMarker = Marker(markerId: MarkerId('destination'))
+    : newMarker = Marker(markerId: const MarkerId('destination'), position: value);
+
+
+    if (temporaryList.isNotEmpty) deleteMarkersByType('destination', temporaryList);
+
+    temporaryList.add(newMarker);
+
+    state = state.copyWith(
+      markers: [...temporaryList],
+      destination: value ?? LatLng(0,0)
+    );
+  }
+
+  List<Marker> deleteMarkersByType(String type, List<Marker> list){
+    list.removeWhere((e)=> e.markerId.value == type);
+    return list;
+  }
+
+  double getDistance({required LatLng origin, required LatLng destination,}){
+      return Geolocator.distanceBetween(
+        origin.latitude, 
+        origin.longitude,
+        destination.latitude, 
+        destination.longitude,
+        );
+    }
 
    getDirection(LatLng from, LatLng to) async{
     GoogleMapsDirections.init(googleAPIKey: Environment.apiKey);
@@ -149,86 +197,62 @@ double getDistance({required LatLng origin, required LatLng destination,}){
   }
 
   void addMarker(LatLng position){
-    
-    if(state.origin == null){
-      final newMarker = Marker(
-        markerId: const MarkerId('origin'),
-        position: position,
-        // onTap: deleteMarker('origin')
-        );
+    state.origin == null
+    ? state = state.copyWith(origin: position)
+    : state = state.copyWith(destination: position);
+  }
 
-      state = state.copyWith(
-        origin: position,
-        // markers: [newMarker, ...state.markers]
-        );
+
+
+  // void addMarker2(LatLng position){
+  //   // we work on temporary list for mutations
+  //   var temporaryList = state.markers;
+
+  //   if(state.markers.isEmpty){
+  //     // if no items, first one is origin
+
+  //     final newMarker = Marker(
+  //       markerId: const MarkerId('origin'),
+  //       position: position);
+
+  //     state = state.copyWith(
+  //       markers: [newMarker],
+  //       origin: position
+  //       );
+
+  //   } else {
+  //     // check if origin is present in list
+  //     bool isOriginPresent = state.markers.any((e)=> e.markerId.value == 'origin');
+  //     final point = isOriginPresent ? 'destination' : 'origin';
+
+  //     // if origin is present,  next one is destination
+  //     deleteMarkersByType(point, temporaryList);
+
+  //     Marker newMarker = Marker(
+  //       markerId: MarkerId(point),
+  //       position: position);
+
+  //     // we add the marker
+  //     temporaryList.add(newMarker);
+
+  //     state = state.copyWith(
+  //       markers: [...temporaryList]
+  //       );
       
-    } else {
-      // if origin is present,  next one is destination
+  //     // if origin is present, then we set the position to destination.
+  //     // otherwise, to origin
+  //     isOriginPresent
+  //     ? state = state.copyWith(destination: position)
+  //     : state = state.copyWith(origin: position);
 
-      final newMarker = Marker(
-        markerId: const MarkerId('destination'),
-        position: position,
-        // onTap: deleteMarker('destination')
-        );
-      state = state.copyWith(
-        destination: position,
-        // markers: [...state.markers, newMarker]
-        );
-
-    }
-  }
-
-  deleteMarker(String name){
-    // List temporaryList = state.markers;
-    // temporaryList.removeWhere((e) => e.markerId.value==name);
+  //   }
     
-    if (name == 'origin'){
-      state = state.copyWith(
-        origin: null,
-        // markers: [...temporaryList]
-        );
-    } else if (name == 'destination'){
-      state = state.copyWith(destination: null,
-      // markers: [...temporaryList]
-      );
-    } 
-  }
+  //   return;
+  // }
 }
 
 
-/**
- *   void addMarker(LatLng position){
-    // we work on temporary list for mutations
-    var temporaryList = state.markers;
 
-    if(state.markers.isEmpty){
-      // if no items, first one is origin
-
-      final newMarker = Marker(
-        markerId: const MarkerId('origin'),
-        position: position);
-
-      state = state.copyWith(markers: [newMarker]);
-
-    } else {
-      // check if origin is present in list
-
-      bool isPresent = state.markers.any((e)=> e.markerId.value == 'origin');
-
-      // if origin is present,  next one is destination
-
-      temporaryList.add(Marker(
-        markerId: MarkerId(isPresent ? 'destination' : 'origin'),
-        position: position));
-
-      state = state.copyWith(markers: temporaryList);
-
-    }
-    
-    return;
-  }
-}
- */
 
 class TripState{
   final List<DirectionLegStep> instructions;
@@ -258,8 +282,10 @@ class TripState{
     instructions : instructions ?? this.instructions,
     polylines : polylines ?? this.polylines,
     currentInstruction : currentInstruction ?? this.currentInstruction,
-    origin : origin ?? this.origin,
-    destination : destination ?? this.destination,
-    markers : markers ?? this.markers,
+    // origin : origin ?? this.origin,
+    origin : origin?.latitude == 0 ? null : origin ?? this.origin,
+    // destination : destination,
+    destination : destination?.latitude == 0 ? null : destination ?? this.destination,
+    markers : markers ?? [],
   );
 }

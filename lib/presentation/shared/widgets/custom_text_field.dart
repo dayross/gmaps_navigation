@@ -1,16 +1,19 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class CustomTextField extends StatelessWidget {
   String hintText;
-  TextEditingController? controller;
-  void Function()? onPressed;
+  String text;
+  void Function()? locationOnPressed;
+  void Function()? deleteOnPressed;
 
   
   CustomTextField({
     this.hintText = '',
-    this.controller,
-    this.onPressed,
+    this.text = '',
+    this.locationOnPressed,
+    this.deleteOnPressed,
     super.key});
 
   @override
@@ -35,16 +38,32 @@ class CustomTextField extends StatelessWidget {
         const SizedBox(height: 3,),
         //hintText input and decoration
         TextField(
-          controller: controller,
+          controller: TextEditingController(text: text),
+          readOnly: true,          
+          maxLines: 1,
           decoration: InputDecoration(
             hintText: hintText,
             enabledBorder: border,
             focusedBorder: border,
+            suffixIconConstraints: BoxConstraints( minWidth: size.width*0.25),
             isDense: true,
             focusColor: colors.primary,
-            suffixIcon: IconButton(
-              onPressed: onPressed, 
-              icon: const Icon(Icons.location_on_sharp))
+            suffixIcon: Container(
+              width: 30,
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: deleteOnPressed, 
+                    icon: const Icon(Icons.cancel)),
+                  IconButton(
+                    onPressed: locationOnPressed, 
+                    icon: const Icon(Icons.location_on_sharp)),
+                ],
+              ),
+            )
           ),
         )
       ],

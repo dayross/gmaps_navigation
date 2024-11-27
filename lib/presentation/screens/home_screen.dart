@@ -1,9 +1,8 @@
-// ignore_for_file: prefer_const_constructors
 
-import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:gmaps_cloneish/presentation/providers/map_controller_provider.dart';
 import 'package:gmaps_cloneish/presentation/providers/trip_provider.dart';
 import 'package:gmaps_cloneish/presentation/providers/watch_location_provider.dart';
@@ -51,19 +50,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   late GoogleMapController mapController;
 
-  final _center = const LatLng(40.6735566313035, -73.952959115342087);
-
   void _onMapCreated(GoogleMapController controller){
     mapController = controller;
   }
+  
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final tripProv = ref.watch(tripProvider);
     
-
-
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -75,26 +71,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 height: size.height*0.8,
                 child: GoogleMap(
                   zoomControlsEnabled: false,
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: _center,
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                  target: LatLng(widget.latitud, widget.longitud),
                   zoom: 14.0),
-                  markers: {
-                    ref.watch(tripProvider).origin != null 
-                      ? Marker(markerId: MarkerId('origin'),
-                          position: tripProv.origin!,
-                          onTap: () => ref.watch(tripProvider.notifier).deleteMarker('origin'),
-                          consumeTapEvents: true
-                          )
-                      : Marker(markerId: MarkerId('origin')),
+                  myLocationEnabled: true,
+                  markers: { 
+                    // ...ref.watch(tripProvider).markers
+                    if (ref.watch(tripProvider).origin != null)
+                      Marker(
+                        markerId: const MarkerId('origin'),
+                        position: ref.watch(tripProvider).origin!,
+                        onTap: () => ref.read(tripProvider.notifier).setOrigin(null),
+                      ),
+                    if (ref.watch(tripProvider).destination != null)
+                      Marker(
+                        markerId: const MarkerId('destination'),
+                        position: ref.watch(tripProvider).destination!,
+                        onTap: () => ref.read(tripProvider.notifier).setDestination(null),
+                      ),
+                                       
 
-                    ref.watch(tripProvider).destination != null 
-                      ? Marker(markerId: MarkerId('destination'),
-                          position: tripProv.destination!,
-                          onTap: () => ref.read(tripProvider.notifier).deleteMarker('destination'),
-                          consumeTapEvents: true
-                          )
-                      : Marker(markerId: MarkerId('destination')),
+                    // tripProv.origin != null 
+                    // ref.watch(tripProvider).origin != null
+                    //   ? Marker(markerId: const MarkerId('origin'),
+                    //       position: tripProv.origin!,
+                    //       // onTap: () => ref.watch(tripProvider.notifier).setOrigin(null),
+                    //       // consumeTapEvents: true
+                    //       )
+                    //   : Marker(markerId: MarkerId('origin')),
+
+                    // ref.watch(tripProvider).destination != null 
+                    //   ? Marker(markerId: const MarkerId('destination'),
+                    //       position: tripProv.destination!,
+                    //       // onTap: () => ref.read(tripProvider.notifier).setDestination(null),
+                    //       // consumeTapEvents: true
+                    //       )
+                    //   : Marker(markerId: MarkerId('destination')),
+                      
+                    // tripProv.destination == null 
+                    //   ? Marker(markerId: MarkerId('destination'))
+                    //   : Marker(markerId: const MarkerId('destination'),
+                    //       position: tripProv.destination!,
+                    //       // onTap: () => ref.read(tripProvider.notifier).setDestination(null),
+                    //       // consumeTapEvents: true
+                    //       ),
+                      
                   },
                   onLongPress: (position){
                     ref.watch(tripProvider.notifier).addMarker(position);
@@ -124,18 +146,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       CustomTextField(
                         hintText: 'Origin', 
-                        controller: TextEditingController(
-                          text: tripProv.origin != null ? '${tripProv.origin!.latitude},${tripProv.origin!.longitude}' : ''
-                        ),
-                        onPressed: () {
-                          ref.watch(tripProvider.notifier).getLocation();
+                        text: tripProv.origin != null ? '${tripProv.origin!.latitude},${tripProv.origin!.longitude}' : '',
+                        locationOnPressed: () async{
+                          Position position = await ref.watch(tripProvider.notifier).getLocation();
+                          ref.watch(tripProvider.notifier).setOrigin(LatLng(position.latitude, position.longitude));
+                          setState(() {});
+                        },
+                        deleteOnPressed: (){
+                          ref.watch(tripProvider.notifier).setOrigin(null);
+                          setState(() {});
                         },),
-                      SizedBox(height: 4,),
+                      const SizedBox(height: 4,),
                       CustomTextField(
                         hintText: 'Destination',
-                        controller: TextEditingController(
-                          text: tripProv.destination != null ? '${tripProv.destination!.latitude},${tripProv.destination!.longitude}' : ''
-                        )),
+                        text: tripProv.destination != null ? '${tripProv.destination!.latitude},${tripProv.destination!.longitude}' : '',
+                        locationOnPressed: () async{
+                          Position position = await ref.watch(tripProvider.notifier).getLocation();
+                          ref.watch(tripProvider.notifier).setDestination(LatLng(position.latitude, position.longitude));
+                          // setState(() {});
+                        },
+                        deleteOnPressed: (){
+                          print('delete PRESIONADO');
+                          // print('valor ahora mismo: ${ref.watch(tripProvider).destination}');
+                          ref.watch(tripProvider.notifier).setDestination(null);
+                          // print('valor actualizado: ${ref.watch(tripProvider).destination}');
+                          // setState(() {});
+                        },),
                       
                     ],
                   ),
